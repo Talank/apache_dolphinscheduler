@@ -19,11 +19,8 @@ name: Backend
 
 on:
   push:
-    branches:
-      - dev
-      - '[0-9]+.[0-9]+.[0-9]+-prepare'
-      - '[0-9]+.[0-9]+.[0-9]+-release'
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: backend-${{ github.event.pull_request.number || github.ref }}
@@ -51,11 +48,16 @@ jobs:
   build:
     name: Backend-Build
     needs: paths-filter
-    if: ${{ (needs.paths-filter.outputs.not-ignore == 'true') || (github.event_name == 'push') }}
-    runs-on: ubuntu-latest
+    if: always()
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        java: [ '8', '11' ]
+        java: ['8', '11']
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+      fail-fast: false
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
@@ -132,7 +134,7 @@ jobs:
           /bin/bash ${{ matrix.case.script }}
   schema-check:
     name: ${{ matrix.case.name }}-${{ matrix.version }}
-    needs: [ build ]
+    needs: [build]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -161,7 +163,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: [ build, paths-filter, cluster-test, schema-check ]
+    needs: [build, paths-filter, cluster-test, schema-check]
     if: always()
     steps:
       - name: Status
