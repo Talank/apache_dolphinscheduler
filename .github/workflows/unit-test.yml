@@ -20,14 +20,7 @@ name: Test
 on:
   pull_request:
   push:
-    paths-ignore:
-      - '**/*.md'
-      - 'dolphinscheduler-ui'
-    branches:
-      - '[0-9]+.[0-9]+.[0-9]+-prepare'
-      - '[0-9]+.[0-9]+.[0-9]+-release'
-      - 'dev'
-
+  workflow_dispatch:
 concurrency:
   group: unit-test-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -100,12 +93,12 @@ jobs:
 
   unit-test:
     name: Unit-Test (${{ matrix.module }} | Java ${{ matrix.java }})
-    needs: [ paths-filter, generate-matrix, sanity-check ]
+    needs: [paths-filter, generate-matrix, sanity-check]
     if: ${{ (needs.paths-filter.outputs.not-ignore == 'true') || (github.event_name == 'push') }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [ '8', '11' ]
+        java: ['8', '11']
         module: ${{ fromJSON(needs.generate-matrix.outputs.matrix).module }}
     timeout-minutes: 60
     steps:
@@ -194,7 +187,7 @@ jobs:
   sonar:
     name: SonarCloud Analysis
     runs-on: ubuntu-latest
-    needs: [ paths-filter, unit-test ]
+    needs: [paths-filter, unit-test]
     if: ${{ needs.unit-test.result == 'success' }}
     timeout-minutes: 30
     steps:
@@ -274,7 +267,7 @@ jobs:
   publish-test-results:
     name: Publish Test Results
     runs-on: ubuntu-latest
-    needs: [ paths-filter, unit-test ]
+    needs: [paths-filter, unit-test]
     if: ${{ needs.unit-test.result == 'success' }}
     steps:
       - name: Download all surefire reports
@@ -294,7 +287,7 @@ jobs:
     name: Unit Test
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [ unit-test, paths-filter, sonar, sanity-check ]
+    needs: [unit-test, paths-filter, sonar, sanity-check]
     if: always()
     steps:
       - name: Status

@@ -18,11 +18,7 @@
 on:
   pull_request:
   push:
-    branches:
-      - dev
-      - '[0-9]+.[0-9]+.[0-9]+-prepare'
-      - '[0-9]+.[0-9]+.[0-9]+-release'
-
+  workflow_dispatch:
 name: E2E
 
 concurrency:
@@ -187,7 +183,7 @@ jobs:
     name: E2E
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: [ e2e, paths-filter ]
+    needs: [e2e, paths-filter]
     if: always()
     steps:
       - name: Status
