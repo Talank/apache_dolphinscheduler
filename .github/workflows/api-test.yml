@@ -16,13 +16,7 @@
 #
 
 on:
-  pull_request:
-  push:
-    branches:
-      - dev
-      - '[0-9]+.[0-9]+.[0-9]+-prepare'
-      - '[0-9]+.[0-9]+.[0-9]+-release'
-
+  workflow_dispatch:
 name: API-Test
 
 concurrency:
@@ -49,8 +43,8 @@ jobs:
   build:
     name: API-Test-Build
     needs: paths-filter
-    if: ${{ (needs.paths-filter.outputs.not-ignore == 'true') || (github.event_name == 'push') }}
-    runs-on: ubuntu-latest
+    if: always()
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     steps:
       - run: df -h
@@ -91,10 +85,17 @@ jobs:
           name: standalone-image-api-test
           path: /tmp/standalone-image.tar
           retention-days: 1
+    strategy:
+      matrix:
+        os: &id001
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+      fail-fast: false
   api-test:
     name: ${{ matrix.case.name }}
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
       matrix:
@@ -123,6 +124,8 @@ jobs:
             class: org.apache.dolphinscheduler.api.test.cases.tasks.DependentTaskAPITest
           - name: EmrServerlessTaskAPITest
             class: org.apache.dolphinscheduler.api.test.cases.tasks.EmrServerlessTaskAPITest
+        os: *id001
+      fail-fast: false
     env:
       RECORDING_PATH: /tmp/recording-${{ matrix.case.name }}
     steps:
@@ -149,7 +152,7 @@ jobs:
           path: /tmp
       - name: Load Docker Images
         run: |
-            docker load -i /tmp/standalone-image.tar
+          docker load -i /tmp/standalone-image.tar
       - name: df -h
         run: df -h
       - name: Run Test
@@ -169,7 +172,7 @@ jobs:
     name: API-Test-Result
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: [ api-test, paths-filter ]
+    needs: [api-test, paths-filter]
     if: always()
     steps:
       - name: Status
