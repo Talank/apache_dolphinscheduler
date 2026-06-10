@@ -16,13 +16,7 @@
 #
 
 on:
-  pull_request:
-  push:
-    branches:
-      - dev
-      - '[0-9]+.[0-9]+.[0-9]+-prepare'
-      - '[0-9]+.[0-9]+.[0-9]+-release'
-
+  workflow_dispatch:
 name: API-Test
 
 concurrency:
@@ -49,7 +43,7 @@ jobs:
   build:
     name: API-Test-Build
     needs: paths-filter
-    if: ${{ (needs.paths-filter.outputs.not-ignore == 'true') || (github.event_name == 'push') }}
+    if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -91,6 +85,8 @@ jobs:
           name: standalone-image-api-test
           path: /tmp/standalone-image.tar
           retention-days: 1
+    strategy:
+      fail-fast: false
   api-test:
     name: ${{ matrix.case.name }}
     needs: build
@@ -123,6 +119,7 @@ jobs:
             class: org.apache.dolphinscheduler.api.test.cases.tasks.DependentTaskAPITest
           - name: EmrServerlessTaskAPITest
             class: org.apache.dolphinscheduler.api.test.cases.tasks.EmrServerlessTaskAPITest
+      fail-fast: false
     env:
       RECORDING_PATH: /tmp/recording-${{ matrix.case.name }}
     steps:
@@ -149,7 +146,7 @@ jobs:
           path: /tmp
       - name: Load Docker Images
         run: |
-            docker load -i /tmp/standalone-image.tar
+          docker load -i /tmp/standalone-image.tar
       - name: df -h
         run: df -h
       - name: Run Test
@@ -169,7 +166,7 @@ jobs:
     name: API-Test-Result
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: [ api-test, paths-filter ]
+    needs: [api-test, paths-filter]
     if: always()
     steps:
       - name: Status

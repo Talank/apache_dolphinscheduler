@@ -16,13 +16,7 @@
 #
 
 on:
-  pull_request:
-  push:
-    branches:
-      - dev
-      - '[0-9]+.[0-9]+.[0-9]+-prepare'
-      - '[0-9]+.[0-9]+.[0-9]+-release'
-
+  workflow_dispatch:
 name: E2E
 
 concurrency:
@@ -51,7 +45,7 @@ jobs:
   build:
     name: E2E-Build
     needs: paths-filter
-    if: ${{ (needs.paths-filter.outputs.not-ignore == 'true') || (github.event_name == 'push') }}
+    if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -86,6 +80,8 @@ jobs:
           name: standalone-image-e2e
           path: /tmp/standalone-image.tar
           retention-days: 1
+    strategy:
+      fail-fast: false
   e2e:
     name: ${{ matrix.case.name }}
     needs: build
@@ -136,6 +132,7 @@ jobs:
             class: org.apache.dolphinscheduler.e2e.cases.HiveDataSourceE2ETest
           - name: DolphinDBDataSourceE2ETest
             class: org.apache.dolphinscheduler.e2e.cases.DolphinDBDataSourceE2ETest
+      fail-fast: false
     env:
       RECORDING_PATH: /tmp/recording-${{ matrix.case.name }}
     steps:
@@ -187,7 +184,7 @@ jobs:
     name: E2E
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: [ e2e, paths-filter ]
+    needs: [e2e, paths-filter]
     if: always()
     steps:
       - name: Status
