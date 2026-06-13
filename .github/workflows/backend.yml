@@ -168,12 +168,19 @@ jobs:
     if: always()
     steps:
       - name: Status
+        env:
+          NOT_IGNORE: ${{ needs.paths-filter.outputs.not-ignore }}
+          DB_SCHEMA: ${{ needs.paths-filter.outputs.db-schema }}
+          EVENT_NAME: ${{ github.event_name }}
+          BUILD_RESULT: ${{ needs.build.result }}
+          CLUSTER_TEST_RESULT: ${{ needs.cluster-test.result }}
+          SCHEMA_CHECK_RESULT: ${{ needs.schema-check.result }}
         run: |
-          if [[ '${{ needs.paths-filter.outputs.not-ignore }}' == 'false' && '${{ needs.paths-filter.outputs.db-schema }}' == 'false' && '${{ github.event_name }}' == 'pull_request' ]]; then
+          if [ "${NOT_IGNORE}" = 'false' ] && [ "${DB_SCHEMA}" = 'false' ] && [ "${EVENT_NAME}" = 'pull_request' ]; then
             echo "Skip Build!"
             exit 0
           fi
-          if [[ '${{ needs.build.result }}' != 'success' || '${{ needs.cluster-test.result }}' != 'success' || '${{ needs.schema-check.result }}' != 'success' ]]; then
+          if [ "${BUILD_RESULT}" != 'success' ] || [ "${CLUSTER_TEST_RESULT}" != 'success' ] || [ "${SCHEMA_CHECK_RESULT}" != 'success' ]; then
             echo "Build Failed!"
-            exit -1
+            exit 1
           fi
