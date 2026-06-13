@@ -58,6 +58,9 @@ jobs:
       fail-fast: false
     timeout-minutes: 30
     steps:
+      - name: Enable long paths for Git on Windows
+        if: runner.os == 'Windows'
+        run: git config --global core.longpaths true
       - uses: actions/checkout@v6
         with:
           submodules: true
@@ -166,11 +169,11 @@ jobs:
     steps:
       - name: Status
         run: |
-          if [[ ${{ needs.paths-filter.outputs.not-ignore }} == 'false' && ${{ needs.paths-filter.outputs.db-schema }} == 'false' && ${{ github.event_name }} == 'pull_request' ]]; then
+          if [[ '${{ needs.paths-filter.outputs.not-ignore }}' == 'false' && '${{ needs.paths-filter.outputs.db-schema }}' == 'false' && '${{ github.event_name }}' == 'pull_request' ]]; then
             echo "Skip Build!"
             exit 0
           fi
-          if [[ ${{ needs.build.result }} != 'success' || ${{ needs.cluster-test.result }} != 'success' || ${{ needs.schema-check.result }} != 'success' ]]; then
+          if [[ '${{ needs.build.result }}' != 'success' || '${{ needs.cluster-test.result }}' != 'success' || '${{ needs.schema-check.result }}' != 'success' ]]; then
             echo "Build Failed!"
             exit -1
           fi
