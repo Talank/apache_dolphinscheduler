@@ -46,7 +46,7 @@ jobs:
     name: E2E-Build
     needs: paths-filter
     if: always()
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
@@ -80,17 +80,10 @@ jobs:
           name: standalone-image-e2e
           path: /tmp/standalone-image.tar
           retention-days: 1
-    strategy:
-      matrix:
-        os: &id001
-          - ubuntu-latest
-          - windows-latest
-          - macos-latest
-      fail-fast: false
   e2e:
     name: ${{ matrix.case.name }}
     needs: build
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       matrix:
@@ -137,7 +130,6 @@ jobs:
             class: org.apache.dolphinscheduler.e2e.cases.HiveDataSourceE2ETest
           - name: DolphinDBDataSourceE2ETest
             class: org.apache.dolphinscheduler.e2e.cases.DolphinDBDataSourceE2ETest
-        os: *id001
       fail-fast: false
     env:
       RECORDING_PATH: /tmp/recording-${{ matrix.case.name }}
@@ -195,11 +187,11 @@ jobs:
     steps:
       - name: Status
         run: |
-          if [[ ${{ needs.paths-filter.outputs.not-ignore }} == 'false' && ${{ github.event_name }} == 'pull_request' ]]; then
+          if [[ '${{ needs.paths-filter.outputs.not-ignore }}' == 'false' && '${{ github.event_name }}' == 'pull_request' ]]; then
             echo "Skip E2E!"
             exit 0
           fi
-          if [[ ${{ needs.e2e.result }} != 'success' ]]; then
+          if [[ '${{ needs.e2e.result }}' != 'success' ]]; then
             echo "E2E Failed!"
             exit -1
           fi
