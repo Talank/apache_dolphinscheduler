@@ -45,7 +45,7 @@ jobs:
   build:
     name: E2E-Build
     needs: paths-filter
-    if: ${{ always() }}
+    if: always()
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     steps:
@@ -80,10 +80,17 @@ jobs:
           name: standalone-image-e2e
           path: /tmp/standalone-image.tar
           retention-days: 1
+    strategy:
+      matrix:
+        os: &id001
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+      fail-fast: false
   e2e:
     name: ${{ matrix.case.name }}
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
       matrix:
@@ -130,6 +137,7 @@ jobs:
             class: org.apache.dolphinscheduler.e2e.cases.HiveDataSourceE2ETest
           - name: DolphinDBDataSourceE2ETest
             class: org.apache.dolphinscheduler.e2e.cases.DolphinDBDataSourceE2ETest
+        os: *id001
       fail-fast: false
     env:
       RECORDING_PATH: /tmp/recording-${{ matrix.case.name }}
@@ -141,7 +149,7 @@ jobs:
           sudo docker image prune --all --force
           sudo docker builder prune -a
       - run: df -h
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: true
       - name: Set up JDK 11
@@ -171,7 +179,7 @@ jobs:
           ./mvnw -B -f dolphinscheduler-e2e/pom.xml -am \
             -DfailIfNoTests=false \
             -Dtest=${{ matrix.case.class }} test
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: always()
         name: Upload Recording
         with:

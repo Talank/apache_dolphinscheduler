@@ -1,0 +1,9 @@
+@@ -18,7 +18,7 @@
+ 
+ on:
+   workflow_dispatch:
+-    inputs: {}
++    inputs:
+ name: E2E
+ 
+ concurrency:
