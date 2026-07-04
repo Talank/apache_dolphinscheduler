@@ -17,17 +17,11 @@
 name: publish-docker
 
 on:
-  push:
-    branches:
-      - dev
-  release:
-    types:
-      - released
-
+  workflow_dispatch:
 jobs:
   build:
-    if: github.repository == 'apache/dolphinscheduler'
-    runs-on: ubuntu-latest
+    if: always()
+    runs-on: ${{ matrix.os }}
     permissions:
       contents: read
       packages: write
@@ -79,3 +73,9 @@ jobs:
           -Ddocker.tag=${{ env.DOCKER_TAG }} \
           -Ddocker.hub=${{ env.HUB }} \
           -Pdocker,staging
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+      fail-fast: false

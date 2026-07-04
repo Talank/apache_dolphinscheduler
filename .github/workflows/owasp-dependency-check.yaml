@@ -18,13 +18,7 @@
 name: OWASP Dependency Check
 
 on:
-  push:
-    branches:
-      - '[0-9]+.[0-9]+.[0-9]+-prepare'
-      - '[0-9]+.[0-9]+.[0-9]+-release'
-  pull_request_target:
-    paths:
-      - '**/pom.xml'
+  workflow_dispatch:
 env:
   MAVEN_OPTS: -Dmaven.wagon.httpconnectionManager.ttlSeconds=25 -Dmaven.wagon.http.retryHandler.count=3
 
@@ -33,7 +27,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v6
@@ -54,8 +48,14 @@ jobs:
           NIST_NVD_API_KEY: ${{ secrets.NIST_NVD_API_KEY }}
       - name: Upload report
         uses: actions/upload-artifact@v6
-        if: ${{ cancelled() || failure() }}
+        if: always()
         continue-on-error: true
         with:
           name: dependency report
           path: target/dependency-check-report.html
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+      fail-fast: false

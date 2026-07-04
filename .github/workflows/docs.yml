@@ -17,10 +17,7 @@
 name: Docs
 
 on:
-  pull_request:
-  schedule:
-    - cron: '0 18 * * *'  # TimeZone: UTC 0
-
+  workflow_dispatch:
 concurrency:
   group: doc-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -28,11 +25,17 @@ concurrency:
 jobs:
   style:
     timeout-minutes: 10
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
       - name: Style Check
         run: ./mvnw spotless:check
+    strategy:
+      matrix:
+        os: &id001
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+      fail-fast: false
   img-check:
     timeout-minutes: 15
     runs-on: ubuntu-latest
@@ -50,7 +53,8 @@ jobs:
       - name: Run Image Check
         run: python img_utils.py -v check
   dead-link:
-    if: (github.event_name == 'schedule' && github.repository == 'apache/dolphinscheduler') || (github.event_name != 'schedule')
+    if: (github.event_name == 'schedule' && github.repository == 'apache/dolphinscheduler') || (github.event_name != 
+      'schedule')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -82,8 +86,8 @@ jobs:
   helm-doc:
     name: Helm-Doc-Execute
     needs: paths-filter
-    if: ${{ (needs.paths-filter.outputs.helm-doc == 'true') || (github.event_name == 'push') }}
-    runs-on: ubuntu-latest
+    if: always()
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
@@ -101,6 +105,10 @@ jobs:
               echo "###### ERROR: helm-doc is not up to date ######"
           fi
           git diff --exit-code
+    strategy:
+      matrix:
+        os: *id001
+      fail-fast: false
   result:
     name: Docs
     runs-on: ubuntu-latest

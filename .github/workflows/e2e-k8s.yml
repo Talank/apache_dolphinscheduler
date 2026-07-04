@@ -16,13 +16,7 @@
 #
 
 on:
-  pull_request:
-  push:
-    branches:
-      - dev
-      - '[0-9]+.[0-9]+.[0-9]+-prepare'
-      - '[0-9]+.[0-9]+.[0-9]+-release'
-
+  workflow_dispatch:
 name: E2E-K8S
 
 concurrency:
@@ -49,8 +43,8 @@ jobs:
   e2e-k8s:
     name: E2E-K8S-Execute
     needs: paths-filter
-    if: ${{ (needs.paths-filter.outputs.not-ignore == 'true') || (github.event_name == 'push') }}
-    runs-on: ubuntu-latest
+    if: always()
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 40
     steps:
       - run: df -h
@@ -150,11 +144,17 @@ jobs:
               done
             done
           done
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+      fail-fast: false
   result:
     name: E2E-K8S-Result
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: [ e2e-k8s, paths-filter ]
+    needs: [e2e-k8s, paths-filter]
     if: always()
     steps:
       - name: Status
