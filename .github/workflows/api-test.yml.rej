@@ -1,0 +1,19 @@
+--- .github/workflows/api-test.yml
++++ .github/workflows/api-test.yml
+@@ -74,14 +74,15 @@ jobs:
+       - name: Build Image
+         run: |
+           ./mvnw -B clean install \
+           -Dmaven.test.skip=true \
+           -Dspotless.skip=true \
+           -Pdocker,staging \
+           -Ddocker.tag=ci \
++          -Ddocker.buildArch=${{ runner.arch == 'ARM64' && 'linux/arm64' || 'linux/amd64' }} \
+           -Danalyze.skip=true
+       - uses: actions/upload-artifact@v6
+         name: Upload Docker Images
+         with:
+-          name: standalone-image-api-test
++          name: standalone-image-api-test-${{ runner.arch }}
+           path: /tmp/standalone-image.tar
+           retention-days: 1
